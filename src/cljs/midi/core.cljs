@@ -4,32 +4,36 @@
             [reagent.core :as r]
             [cljsjs.react]))
 
-(def waves [:sine :square :sawtooth :triangle])
+(def app-state
+  (r/atom
+    {:wave :sine}))
+
+(defn start-note [freq] (s/start-note freq (@app-state :wave)))
+(defn stop-note [freq] (s/stop-note freq))
+
+(defn slider
+  [title min max on-change]
+  [:div
+    title
+    [:input {:type "range" :min min :max max
+     :on-change #(on-change (-> % .-target .-value))}]])
 
 (defn wave-button
   [wave]
-  [:button {:on-click #(s/update-wave! (name wave))}
+  [:button
+    {:on-click #(swap! app-state assoc :wave wave)
+     :class (if (= (@app-state :wave) wave) "active" nil)}
     (name wave)])
-
-(defn q-slider
-  []
-  [:div
-    [:input {:type "range" :min 0 :max 30
-     :on-change #(s/update-q! (-> % .-target .-value))}]])
-
-(defn frequency-slider
-  []
-  [:div
-    [:input {:type "range" :min 0 :max 30000
-     :on-change #(s/update-frequency! (-> % .-target .-value))}]])
 
 (defn main-page
   []
   [:div
-    [q-slider]
-    [frequency-slider]
-    (for [w waves]
-        [wave-button w])])
+    [slider "filter-q" 0 10 s/update-q!]
+    [slider "filter-freq" 0 10000 s/update-frequency!]
+    [slider "lfo-speed" 1 100 s/update-lfo-speed!]
+    [slider "lfo-depth" 0 20 s/update-lfo-depth!]
+    (for [w (s/get-waves)]
+        ^{:key w}[wave-button w])])
 
 (defn mount-root
   []
@@ -37,5 +41,5 @@
 
 (defn init!
   []
-  (do (m/request-midi-access)
+  (do (m/init! start-note stop-note)
   	  (mount-root)))

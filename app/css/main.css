@@ -1,0 +1,12 @@
+button {
+	color: #ccc;
+	border: 0;
+	background-color: #555;
+	margin-right: 4px;
+	outline: 0;
+}
+
+button.active {
+	color: white;
+	background-color: #66a;
+}
