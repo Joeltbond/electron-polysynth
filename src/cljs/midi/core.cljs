@@ -1,41 +1,35 @@
 (ns midi.core
-  (:require [midi.synth :as s]
+  (:require [midi.midi :as m]
+            [midi.synth :as s]
             [reagent.core :as r]
             [cljsjs.react]))
 
-(def app-state (r/atom
-	{:message "waiting for notes.."}))
+(def waves [:sine :square :sawtooth :triangle])
 
-(defn get-frequency [note]
-  (* 440 (.pow js/Math 2 (/ (- note 69) 12))))
+(defn wave-button
+  [wave]
+  [:button {:on-click #(s/update-wave! (name wave))}
+    (name wave)])
 
-(defn on-midi-message [message]
-  (let [data (.-data message)]
-    (swap! app-state assoc :message data)
-    (if (= (aget data 0) 144)
-      (s/start-note (get-frequency (aget data 1)))
-      (s/stop-note (get-frequency (aget data 1))))))
+(defn q-slider
+  []
+  [:div
+    [:input {:type "range" :min 0 :max 30
+     :on-change #(s/update-q! (-> % .-target .-value))}]])
 
-(defn attach-midi-handlers [inputs]
-  (loop [input (.next inputs)]
-    (if (not (.-done input))
-      (do (set! (.-onmidimessage input.value) on-midi-message)
-        (recur (.next inputs))))))
-
-(defn on-midi-success [midi-access]
-  (do (.log js/console "got midi access")
-      (attach-midi-handlers (.values midi-access.inputs))))
-
-(defn on-midi-failure []
-	(.log js/console "failed to get midi access"))
-
-(defn request-midi-access []
-	(let [midi-promise (.requestMIDIAccess js/navigator (js-obj "sysex" false))]
-		(.then midi-promise on-midi-success on-midi-failure)))
+(defn frequency-slider
+  []
+  [:div
+    [:input {:type "range" :min 0 :max 30000
+     :on-change #(s/update-frequency! (-> % .-target .-value))}]])
 
 (defn main-page
   []
-  [:div (@app-state :message)])
+  [:div
+    [q-slider]
+    [frequency-slider]
+    (for [w waves]
+        [wave-button w])])
 
 (defn mount-root
   []
@@ -43,5 +37,5 @@
 
 (defn init!
   []
-  (do (request-midi-access)
+  (do (m/request-midi-access)
   	  (mount-root)))
