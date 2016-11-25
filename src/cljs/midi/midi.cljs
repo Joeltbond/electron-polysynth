@@ -5,12 +5,13 @@
 (defn get-frequency [note]
   (* 440 (.pow js/Math 2 (/ (- note 69) 12))))
 
-;todo be specific about events
 (defn on-midi-message [message]
-  (let [data (.-data message)]
-    (if (= (aget data 0) 144)
-      ((@callbacks :on-keydown) (get-frequency (aget data 1)))
-      ((@callbacks :on-keyup) (get-frequency (aget data 1))))))
+  (let [note-number (aget (.-data message) 1)
+  	    message-number (aget (.-data message) 0)]
+    (case message-number
+      144 ((@callbacks :on-keydown) (get-frequency note-number))
+      128 ((@callbacks :on-keyup) (get-frequency note-number))
+      "default")))
 
 (defn attach-midi-handlers [inputs]
   (loop [input (.next inputs)]
