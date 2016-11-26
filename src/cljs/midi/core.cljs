@@ -1,7 +1,7 @@
-(ns midi.core
-  (:require [midi.midi :as m]
-            [midi.synth :as s]
-            [midi.components :as c]
+(ns synth.core
+  (:require [synth.midi :as m]
+            [synth.synth :as s]
+            [synth.components :as c]
             [reagent.core :as r]
             [cljsjs.react]))
 

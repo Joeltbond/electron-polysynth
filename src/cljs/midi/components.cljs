@@ -1,4 +1,4 @@
-(ns midi.components
+(ns synth.components
 	(:require [reagent.core :as r]))
 
 (defn percent-to-deg [percent]

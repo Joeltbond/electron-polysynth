@@ -1,4 +1,4 @@
-(ns midi.midi)
+(ns synth.midi)
 
 (def callbacks (atom {:on-keydown nil :on-keyup nil}))
 

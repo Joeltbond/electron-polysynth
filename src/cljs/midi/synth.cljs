@@ -1,4 +1,4 @@
-(ns midi.synth)
+(ns synth.synth)
 
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
