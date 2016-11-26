@@ -8,6 +8,8 @@
   (r/atom
     {:wave :sine}))
 
+(def waves [:sine :square :sawtooth :triangle])
+
 (defn start-note [freq] (s/start-note freq (@app-state :wave)))
 (defn stop-note [freq] (s/stop-note freq))
 
@@ -32,7 +34,7 @@
     [slider "filter-freq" 0 10000 s/update-frequency!]
     [slider "lfo-speed" 1 100 s/update-lfo-speed!]
     [slider "lfo-depth" 0 20 s/update-lfo-depth!]
-    (for [w (s/get-waves)]
+    (for [w waves]
         ^{:key w}[wave-button w])])
 
 (defn mount-root

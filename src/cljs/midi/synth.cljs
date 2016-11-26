@@ -1,13 +1,9 @@
 (ns midi.synth)
 
-(def waves [:sine :square :sawtooth :triangle])
-
 (def ctx (js/AudioContext.))
+(def active-voices (atom {}))
 
-(def gain (.createGain ctx))
-(set! (.-value gain.gain) 0.1)
-(.connect gain ctx.destination)
-
+;; vibrato
 (def vib (.createOscillator ctx))
 (def vib-gain (.createGain ctx))
 (set! (.-type vib) "sine")
@@ -16,36 +12,45 @@
 (.connect vib vib-gain)
 (.start vib)
 
-(def synth-filter (.createBiquadFilter ctx))
-(set! (.-type synth-filter) "lowpass")
-(set! (.-value synth-filter.frequency) 10000)
-(.connect synth-filter gain)
+;; master filter
+(def master-filter (.createBiquadFilter ctx))
+(set! (.-type master-filter) "lowpass")
+(set! (.-value master-filter.frequency) 10000)
 
-(def oscillators (atom {}))
+;; master volume
+(def master-volume (.createGain ctx))
+(set! (.-value master-volume.gain) 0.1)
 
-(defn get-waves [] waves)
+;; routing
+(.connect master-filter master-volume)
+(.connect master-volume ctx.destination)
 
+;; controls
 (defn update-frequency! [new-freq]
-    (set! (.-value synth-filter.frequency) new-freq))
+    (set! (.-value master-filter.frequency) new-freq))
 (defn update-q! [new-q]
-    (set! (.-value synth-filter.Q) new-q))
+    (set! (.-value master-filter.Q) new-q))
 (defn update-lfo-speed! [new-speed]
     (set! (.-value vib.frequency) new-speed))
 (defn update-lfo-depth! [new-depth]
     (set! (.-value vib-gain.gain) new-depth))
 
-(defn start-note [freq wave]
-	(let [osc (.createOscillator ctx)
+(defn start-note
+  "Starts a new synth voice and adds it to the map of active voices"
+  [freq wave]
+  (let [osc (.createOscillator ctx)
         gain (.createGain ctx)]
-		(set! (.-type osc) (name wave))
-		(set! (.-value osc.frequency) freq)
-        (.connect osc synth-filter)
-    (.connect gain ctx.destination)
+    (set! (.-type osc) (name wave))
+    (set! (.-value osc.frequency) freq)
+    (set! (.-value gain.gain) 0.1)
     (.connect vib-gain osc.frequency)
+    (.connect osc master-filter)
     (.start osc)
-		(swap! oscillators assoc freq osc)))
+    (swap! active-voices assoc freq osc)))
 
-(defn stop-note [freq]
-  (let [osc (@oscillators freq)]
+(defn stop-note
+  "Stops a synth voice and removes it from the map of active voices"
+  [freq]
+  (let [osc (@active-voices freq)]
     (.stop osc)
-    (swap! oscillators dissoc freq)))
+    (swap! active-voices dissoc freq)))
