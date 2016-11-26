@@ -30,9 +30,9 @@
 
   :profiles {:dev {:cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]
                                               :compiler {:source-map true
-                                                         :main       "midi.dev"
+                                                         :main       "synth.dev"
                                                          :verbose true}
-                                              :figwheel {:on-jsload "midi.core/mount-root"}}}}
+                                              :figwheel {:on-jsload "synth.core/mount-root"}}}}
                    :source-paths ["env/dev/cljs"]
 
                    :dependencies [[figwheel-sidecar "0.5.0-6"]]

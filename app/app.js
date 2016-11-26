@@ -89,7 +89,7 @@ var menuTemplate = [fileMenu, debugMenu, helpMenu];
 // on all operating systems
 const browserWindowOptions = {
   height: 850,
-  title: 'midi',
+  title: 'electron polysynth',
   width: 1400,
   icon: __dirname + '/img/logo_96x96.png'
 };
