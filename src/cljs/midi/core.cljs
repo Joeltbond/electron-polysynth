@@ -8,20 +8,17 @@
 (defonce app-state
   (r/atom
     {:wave :sine
-     :knob-value 100}))
+     :filter-frequency 100
+     :knob-value 100
+     :lfo-speed 2
+     :lfo-depth 15}))
 
-(def waves [:sine :square :sawtooth :triangle])
+(def waves [:sawtooth :square :triangle])
 
 (defn start-note [freq] (s/start-note freq (@app-state :wave)))
 (defn stop-note [freq] (s/stop-note freq))
 
-(defn slider
-  [title min max on-change]
-  [:div
-    title
-    [:input {:type "range" :min min :max max
-     :on-change #(on-change (-> % .-target .-value))}]])
-
+;; todo: move to components ns
 (defn wave-button
   [wave]
   [:button
@@ -29,16 +26,31 @@
      :class (if (= (@app-state :wave) wave) "active" nil)}
     (name wave)])
 
+(defn make-knob-callback [keyw callback]
+  #(do (swap! app-state assoc keyw %)
+      (callback %)))
+
 (defn main-page
   []
-  [:div
-    [slider "filter-q" 0 10 s/update-q!]
-    [slider "filter-freq" 0 10000 s/update-frequency!]
-    [slider "lfo-speed" 1 100 s/update-lfo-speed!]
-    [slider "lfo-depth" 0 20 s/update-lfo-depth!]
-    [c/knob "depth" (@app-state :knob-value) #(swap! app-state assoc :knob-value %)]
-    (for [w waves]
-        ^{:key w}[wave-button w])])
+  [:div {:class "app"}
+    [:h1 "electron polysynth"]
+    [:div
+      [c/knob "lfo-speed"
+              (@app-state :lfo-speed)
+              (make-knob-callback :lfo-speed s/update-lfo-speed!)]
+      [c/knob "lfo-depth"
+              (@app-state :lfo-depth)
+              (make-knob-callback :lfo-depth s/update-lfo-depth!)]
+      [c/knob "filter-q"
+              (@app-state :filter-q)
+              (make-knob-callback :filter-q s/update-q!)]
+      [c/knob "filter-freq"
+              (@app-state :filter-frequency)
+              (make-knob-callback :filter-frequency s/update-frequency!)]]
+    [:div {:class "button-container"}
+      (for [w waves]
+          ^{:key w}[wave-button w])
+      [:div "osc waveforms"]]])
 
 (defn mount-root
   []

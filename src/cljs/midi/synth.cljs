@@ -25,15 +25,29 @@
 (.connect master-filter master-volume)
 (.connect master-volume ctx.destination)
 
+;; conversions
+(defn percent-to-freq [percent]
+  (* percent 100))
+(defn percent-to-q [percent]
+  (/ percent 10))
+(defn percent-to-lfo-speed [percent]
+  (/ percent 5))
+(defn percent-to-lfo-depth [percent]
+  (/ percent 4))
+
 ;; controls
-(defn update-frequency! [new-freq]
-    (set! (.-value master-filter.frequency) new-freq))
-(defn update-q! [new-q]
-    (set! (.-value master-filter.Q) new-q))
-(defn update-lfo-speed! [new-speed]
-    (set! (.-value vib.frequency) new-speed))
-(defn update-lfo-depth! [new-depth]
-    (set! (.-value vib-gain.gain) new-depth))
+(defn update-frequency! [percent]
+  (let [new-freq (percent-to-freq percent)]
+    (set! (.-value master-filter.frequency) new-freq)))
+(defn update-q![percent]
+  (let [new-q (percent-to-q percent)]
+    (set! (.-value master-filter.Q) new-q)))
+(defn update-lfo-speed! "no conversion" [percent]
+  (let [new-speed (percent-to-lfo-speed percent)]
+    (set! (.-value vib.frequency) new-speed)))
+(defn update-lfo-depth! [percent]
+  (let [new-depth (percent-to-lfo-depth percent)]
+    (set! (.-value vib-gain.gain) new-depth)))
 
 (defn start-note
   "Starts a new synth voice and adds it to the map of active voices"

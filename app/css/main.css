@@ -1,5 +1,22 @@
 html {
   font-family: futura;
+  text-align: center;
+  background-color: #eee;
+}
+
+.app {
+  display: inline-block;
+  text-align: center;
+  padding-top: 80px;
+}
+
+h1 {
+  color: #333;
+}
+
+.button-container {
+  color: #66a;
+  margin-top: 30px;
 }
 
 button {
@@ -7,8 +24,12 @@ button {
   border: 0;
   background-color: #555;
   font-family: futura;
-  margin-right: 4px;
+  font-size: 14px;
+  line-height: 1;
+  padding: 10px 10px;
+  margin: 0 2px 8px;
   outline: 0;
+  width: 80px;
 }
 
 button.active {
@@ -19,9 +40,11 @@ button.active {
 .knob-container {
   display: inline-block;
   text-align: center;
+  width: 80px;
 }
 
 .knob {
+  display: inline-block;
   background-color: #66a;
   border-radius: 50%;
   height: 50px;
