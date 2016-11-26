@@ -1,12 +1,14 @@
 (ns midi.core
   (:require [midi.midi :as m]
             [midi.synth :as s]
+            [midi.components :as c]
             [reagent.core :as r]
             [cljsjs.react]))
 
-(def app-state
+(defonce app-state
   (r/atom
-    {:wave :sine}))
+    {:wave :sine
+     :knob-value 100}))
 
 (def waves [:sine :square :sawtooth :triangle])
 
@@ -34,6 +36,7 @@
     [slider "filter-freq" 0 10000 s/update-frequency!]
     [slider "lfo-speed" 1 100 s/update-lfo-speed!]
     [slider "lfo-depth" 0 20 s/update-lfo-depth!]
+    [c/knob "depth" (@app-state :knob-value) #(swap! app-state assoc :knob-value %)]
     (for [w waves]
         ^{:key w}[wave-button w])])
 
