@@ -7,11 +7,12 @@
 
 (defonce app-state
   (r/atom
-    {:wave :sine
-     :filter-frequency 100
+    {:wave :sawtooth
+     :filter-frequency 10
+     :filter-q 50
      :knob-value 100
-     :lfo-speed 2
-     :lfo-depth 15}))
+     :lfo-speed 10
+     :lfo-depth 8}))
 
 (def waves [:sawtooth :square :triangle])
 
@@ -59,4 +60,5 @@
 (defn init!
   []
   (do (m/init! start-note stop-note)
-  	  (mount-root)))
+    (s/init! @app-state)
+  	(mount-root)))

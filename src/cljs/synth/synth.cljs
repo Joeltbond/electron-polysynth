@@ -53,11 +53,14 @@
   "Starts a new synth voice and adds it to the map of active voices"
   [freq wave]
   (let [osc (.createOscillator ctx)
-        gain (.createGain ctx)]
+        gain (.createGain ctx)
+        vib-tuner (.createGain ctx)]
     (set! (.-type osc) (name wave))
     (set! (.-value osc.frequency) freq)
     (set! (.-value gain.gain) 0.1)
-    (.connect vib-gain osc.frequency)
+    (set! (.-value vib-tuner.gain) (/ freq 400))
+    (.connect vib-gain vib-tuner)
+    (.connect vib-tuner osc.frequency)
     (.connect osc master-filter)
     (.start osc)
     (swap! active-voices assoc freq osc)))
@@ -68,3 +71,10 @@
   (let [osc (@active-voices freq)]
     (.stop osc)
     (swap! active-voices dissoc freq)))
+
+;; use to pass in inital state
+(defn init! [settings]
+  (do (update-frequency! (settings :filter-frequency))
+    (update-q! (settings :filter-q))
+    (update-lfo-speed! (settings :lfo-speed))
+    (update-lfo-depth! (settings :lfo-depth))))
