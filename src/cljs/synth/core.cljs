@@ -12,7 +12,11 @@
      :filter-q 50
      :knob-value 100
      :lfo-speed 10
-     :lfo-depth 8}))
+     :lfo-depth 8
+     :attack 0
+     :decay 50
+     :sustain 100
+     :release 0}))
 
 (def waves [:sawtooth :square :triangle])
 
@@ -51,7 +55,17 @@
     [:div {:class "button-container"}
       (for [w waves]
           ^{:key w}[wave-button w])
-      [:div "osc waveforms"]]])
+      [:div "osc waveforms"]]
+    [:div
+      [c/knob "attack"
+              (@app-state :attack)
+              (make-knob-callback :attack #())]
+      [c/knob "decay"
+              (@app-state :decay #())]
+      [c/knob "sustain"
+              (@app-state :sustain #())]
+      [c/knob "release"
+              (@app-state :release #())]]])
 
 (defn mount-root
   []
