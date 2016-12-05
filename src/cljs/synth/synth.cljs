@@ -5,6 +5,8 @@
 (def active-voices (atom {}))
 (def current-osc-wave (atom :sine))
 
+(def adsr {:attack 0.5 :release 0.5})
+
 ;; utils
 (defn- connect [& nodes]
   (doall
@@ -94,14 +96,18 @@
   [freq]
   (let [osc (create-oscillator freq @current-osc-wave)
         gain (.createGain ctx)
-        vibrato-tuner (.createGain ctx)]
+        vibrato-tuner (.createGain ctx)
+        now (.-currentTime ctx)]
     (.log js/console freq)
-    (set! (.-value gain.gain) 0.1)
+    (set! (.-value gain.gain) 0)
     (set! (.-value vibrato-tuner.gain) (/ freq 400))
     (patch-to! vibrato vibrato-tuner)
     (connect vibrato-tuner osc.frequency)
-    (connect osc master-filter)
+    (connect osc gain master-filter)
     (.start osc)
+    (.cancelScheduledValues gain.gain now)
+    (.setValueAtTime gain.gain 0 now)
+    (.linearRampToValueAtTime gain.gain 1 (+ now (:attack adsr)))
     (swap! active-voices assoc freq osc)))
 
 (defn stop-note
