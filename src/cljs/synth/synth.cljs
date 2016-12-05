@@ -3,6 +3,7 @@
 
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
+(def current-osc-wave (atom :sine))
 
 ;; utils
 (defn- connect [& nodes]
@@ -79,6 +80,8 @@
 (defn update-lfo-depth! [percent]
   (let [depth (percent-to-lfo-depth percent)]
     (set-gain! vibrato depth)))
+(defn update-osc-wave! [wave]
+  (reset! current-osc-wave wave))
 
 (defn- create-oscillator [frequency wave]
   (let [osc (.createOscillator ctx)]
@@ -89,7 +92,7 @@
 (defn start-note
   "Starts a new synth voice and adds it to the map of active voices"
   [freq]
-  (let [osc (create-oscillator freq "sine")
+  (let [osc (create-oscillator freq @current-osc-wave)
         gain (.createGain ctx)
         vibrato-tuner (.createGain ctx)]
     (.log js/console freq)
@@ -120,4 +123,5 @@
   (do (update-frequency! (settings :filter-frequency))
     (update-q! (settings :filter-q))
     (update-lfo-speed! (settings :lfo-speed))
-    (update-lfo-depth! (settings :lfo-depth))))
+    (update-lfo-depth! (settings :lfo-depth))
+    (update-osc-wave! (settings :wave))))

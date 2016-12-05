@@ -17,13 +17,14 @@
      :sustain 100
      :release 0}))
 
-(def waves [:sawtooth :square :triangle])
+(def waves [:sawtooth :square :triangle :sine])
 
 ;; todo: move to components ns
 (defn wave-button
   [wave]
   [:button
-    {:on-click #(swap! app-state assoc :wave wave)
+    {:on-click #(do (swap! app-state assoc :wave wave)
+                    (s/update-osc-wave! wave))
      :class (if (= (@app-state :wave) wave) "active" nil)}
     (name wave)])
 
