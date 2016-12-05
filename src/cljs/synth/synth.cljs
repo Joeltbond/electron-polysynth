@@ -1,4 +1,5 @@
-(ns synth.synth)
+(ns synth.synth
+  (:require [synth.audio.note-processor :as np]))
 
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
@@ -35,8 +36,10 @@
 
 (defn make-lfo [context]
   (let [lfo (->LFO (.createOscillator context) (.createGain context))]
+    (.connect (:oscillator lfo) (:gain lfo))
     (.start (:oscillator lfo))
     lfo))
+
 
 ;; vibrato
 (def vibrato (make-lfo ctx))
@@ -85,10 +88,11 @@
 
 (defn start-note
   "Starts a new synth voice and adds it to the map of active voices"
-  [freq wave]
-  (let [osc (create-oscillator freq wave)
+  [freq]
+  (let [osc (create-oscillator freq "sine")
         gain (.createGain ctx)
         vibrato-tuner (.createGain ctx)]
+    (.log js/console freq)
     (set! (.-value gain.gain) 0.1)
     (set! (.-value vibrato-tuner.gain) (/ freq 400))
     (patch-to! vibrato vibrato-tuner)
@@ -103,6 +107,13 @@
   (let [osc (@active-voices freq)]
     (.stop osc)
     (swap! active-voices dissoc freq)))
+
+(def note-processor (np/make-note-processor
+  {:on-note-on start-note
+   :on-note-off stop-note}))
+
+(defn listen-for-notes [channel]
+  (np/listen note-processor channel))
 
 ;; use to pass in inital state
 (defn init! [settings]

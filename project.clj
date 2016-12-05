@@ -10,6 +10,7 @@
                  [org.clojure/clojurescript "1.7.228"]
                  [cljsjs/react "0.13.3-1"]
                  [cljsjs/nodejs-externs "1.0.4-1"]
+                 [org.clojure/core.async "0.2.395"]
                  [reagent "0.5.1"]]
 
   :plugins [[lein-cljsbuild "1.1.3"]]
@@ -32,7 +33,7 @@
                                               :compiler {:source-map true
                                                          :main       "synth.dev"
                                                          :verbose true}
-                                              :figwheel {:on-jsload "synth.core/mount-root"}}}}
+                                              :figwheel {:on-jsload "synth.core/init!"}}}}
                    :source-paths ["env/dev/cljs"]
 
                    :dependencies [[figwheel-sidecar "0.5.0-6"]]
