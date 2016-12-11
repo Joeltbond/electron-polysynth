@@ -1,7 +1,7 @@
 
 # electron polysynth
 
-A simple, organ-like synthesizer built with Electron, Web Audio API, ClojureScript, and Reagent.
+A simple, organ-like synthesizer built with Web Audio, Reagent and Re-frame running in Electron.
 
 ![screenshot](/screenshots/Screen\ Shot.png?raw=true&r=10 "screenshot")
 
