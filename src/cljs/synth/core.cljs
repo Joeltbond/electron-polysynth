@@ -1,15 +1,18 @@
 (ns synth.core
-  (:require [synth.midi :as m]
-            [synth.synth :as s]
-            [synth.components :as c]
-            [synth.ui :as ui]
-            [synth.channel-router :as cr]
-            [cljsjs.react]))
+  (:require [synth.views]
+            [reagent.core :as reagent]
+            [synth.events]
+            [synth.subs]
+            [re-frame.core :refer [dispatch dispatch-sync]]
+            [synth.channel-router :as cr]))
+
+(enable-console-print!)
 
 (defn mount-root
   []
-  (do (cr/init!)
-    (ui/init!)))
+  (dispatch-sync [:initialise-db])
+  (reagent/render [synth.views/main-page]
+                  (.getElementById js/document "app")))
 
 (defn init!
   []

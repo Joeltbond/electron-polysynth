@@ -1,5 +1,7 @@
 (ns synth.synth
-  (:require [synth.audio.note-processor :as np]))
+  (:require [synth.audio.note-processor :as np]
+            [synth.audio.envelope :as env]
+            [synth.audio.voice :as voice]))
 
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
@@ -43,7 +45,6 @@
     (.start (:oscillator lfo))
     lfo))
 
-
 ;; vibrato
 (def vibrato (make-lfo ctx))
 
@@ -54,7 +55,7 @@
 
 ;; master volume
 (def master-volume (.createGain ctx))
-(set! (.-value master-volume.gain) 0.1)
+(set! (.-value master-volume.gain) 0.5)
 
 ;; routing
 (connect master-filter master-volume ctx.destination)
@@ -96,25 +97,23 @@
   [freq]
   (let [osc (create-oscillator freq @current-osc-wave)
         gain (.createGain ctx)
-        vibrato-tuner (.createGain ctx)
-        now (.-currentTime ctx)]
-    (.log js/console freq)
-    (set! (.-value gain.gain) 0)
+        envelope (env/make-envelope ctx gain.gain 
+          {:attack-time 0 :decay-time 0 :sustain-level 1 :release-time 1})
+        vibrato-tuner (.createGain ctx)]
     (set! (.-value vibrato-tuner.gain) (/ freq 400))
     (patch-to! vibrato vibrato-tuner)
     (connect vibrato-tuner osc.frequency)
     (connect osc gain master-filter)
+    (env/trigger-on envelope)
     (.start osc)
-    (.cancelScheduledValues gain.gain now)
-    (.setValueAtTime gain.gain 0 now)
-    (.linearRampToValueAtTime gain.gain 1 (+ now (:attack adsr)))
-    (swap! active-voices assoc freq osc)))
+    (swap! active-voices assoc freq (voice/make-voice osc envelope))))
 
 (defn stop-note
   "Stops a synth voice and removes it from the map of active voices"
   [freq]
-  (let [osc (@active-voices freq)]
-    (.stop osc)
+  (let [voice (@active-voices freq)
+        envelope (:envelope voice)]
+    (env/trigger-off envelope)
     (swap! active-voices dissoc freq)))
 
 (def note-processor (np/make-note-processor

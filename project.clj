@@ -6,12 +6,12 @@
 
   :source-paths ["src/cljs"]
 
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.228"]
-                 [cljsjs/react "0.13.3-1"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.9.227"]
                  [cljsjs/nodejs-externs "1.0.4-1"]
                  [org.clojure/core.async "0.2.395"]
-                 [reagent "0.5.1"]]
+                 [reagent "0.6.0-rc"]
+                 [re-frame "0.8.0"]]
 
   :plugins [[lein-cljsbuild "1.1.3"]]
 
