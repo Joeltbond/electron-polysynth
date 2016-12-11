@@ -4,6 +4,8 @@
 	(trigger-on [this])
 	(trigger-off [this]))
 
+;; naive implementation
+;; TODO: fix release when attack peak is never reached
 (defrecord Envelope [context parameter adsr]
 	IEnvelope
 	(trigger-on [this]
