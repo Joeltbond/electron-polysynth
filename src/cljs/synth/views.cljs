@@ -19,11 +19,13 @@
       [c/knob "filter q"    :filter-q]
       [c/knob "filter-freq" :filter-freq]]
 
+    ;; OSC
     [:div {:class "button-container"}
       (for [w waves]
           ^{:key w}[c/wave-button w])
       [:div "osc waveforms"]]
 
+    ;; ADSR
     [:div
       [c/knob "attack"  :attack-time]
       [c/knob "decay"   :decay-time]
