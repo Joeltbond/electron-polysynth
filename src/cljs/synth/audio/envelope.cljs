@@ -26,5 +26,6 @@
 			(.cancelScheduledValues parameter now)
 			(.linearRampToValueAtTime parameter 0 (+ now release)))))
 
+
 (defn make-envelope [context parameter adsr]
 	(->Envelope context parameter (atom adsr)))

@@ -6,8 +6,7 @@
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
 (def current-osc-wave (atom :sine))
-
-(def adsr {:attack 0.5 :release 0.5})
+(def adsr (atom {:attack-time 0 :decay-time 0 :sustain-level 1 :release-time 0}))
 
 ;; utils
 (defn- connect [& nodes]
@@ -71,6 +70,7 @@
   (/ percent 4))
 
 ;; controls
+;; TODO: Fix bad api. switch to key-based
 (defn update-frequency! [percent]
   (let [new-freq (percent-to-freq percent)]
     (set! (.-value master-filter.frequency) new-freq)))
@@ -85,6 +85,14 @@
     (set-gain! vibrato depth)))
 (defn update-osc-wave! [wave]
   (reset! current-osc-wave wave))
+(defn update-attack! [percent]
+  (swap! adsr assoc :attack-time (/ percent 10)))
+(defn update-decay! [percent]
+  (swap! adsr assoc :decay-time (/ percent 10)))
+(defn update-release! [percent]
+  (swap! adsr assoc :release-time (/ percent 10)))
+(defn update-sustain! [percent]
+  (swap! adsr assoc :sustain-level (/ percent 100)))
 
 (defn- create-oscillator [frequency wave]
   (let [osc (.createOscillator ctx)]
@@ -97,8 +105,7 @@
   [freq]
   (let [osc (create-oscillator freq @current-osc-wave)
         gain (.createGain ctx)
-        envelope (env/make-envelope ctx gain.gain 
-          {:attack-time 0 :decay-time 0 :sustain-level 1 :release-time 1})
+        envelope (env/make-envelope ctx gain.gain @adsr)
         vibrato-tuner (.createGain ctx)]
     (set! (.-value vibrato-tuner.gain) (/ freq 400))
     (patch-to! vibrato vibrato-tuner)
@@ -122,11 +129,3 @@
 
 (defn listen-for-notes [channel]
   (np/listen note-processor channel))
-
-;; use to pass in inital state
-(defn init! [settings]
-  (do (update-frequency! (settings :filter-frequency))
-    (update-q! (settings :filter-q))
-    (update-lfo-speed! (settings :lfo-speed))
-    (update-lfo-depth! (settings :lfo-depth))
-    (update-osc-wave! (settings :wave))))
