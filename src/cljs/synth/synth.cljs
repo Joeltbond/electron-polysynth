@@ -100,6 +100,8 @@
     (set! (.-value osc.frequency) frequency)
     osc))
 
+
+;;TODO. need to delete nodes
 (defn start-note
   "Starts a new synth voice and adds it to the map of active voices"
   [freq]
