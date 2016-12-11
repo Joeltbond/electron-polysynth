@@ -3,7 +3,7 @@
 
 A simple, organ-like synthesizer built with Electron, Web Audio API, ClojureScript, and Reagent.
 
-![screenshot](/screenshots/Screen\ Shot.png?raw=true?r "screenshot")
+![screenshot](/screenshots/Screen\ Shot.png?raw=true&r=10 "screenshot")
 
 ## Requirements
 
