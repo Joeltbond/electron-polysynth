@@ -1,19 +1,13 @@
 (ns synth.audio.voice
 	(:require [synth.audio.utils :as utils]))
 
-(defn- make-oscillator [ctx]
-  (.createOscillator ctx))
-
-(defn- make-gain [ctx]
-	(.createGain ctx))
-
 (defrecord Voice
 	[oscillator vca vibrato-amplitude])
 
 (defn make-voice [context pitch-lfo output]
-	(let [osc (make-oscillator context)
-		    vca (make-gain context)
-		    vibrato-amplitude (make-gain context)]
+	(let [osc (utils/make-oscillator context)
+		    vca (utils/make-gain context)
+		    vibrato-amplitude (utils/make-gain context)]
 		(utils/connect pitch-lfo vibrato-amplitude osc.frequency)
 		(utils/connect osc vca output)
 

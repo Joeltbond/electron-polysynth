@@ -1,6 +1,5 @@
 (ns synth.synth
   (:require [synth.audio.note-processor :as np]
-            [synth.audio.envelope :as env]
             [synth.audio.voice :as voice]
             [synth.audio.utils :as utils]))
 
@@ -21,36 +20,36 @@
 (defprotocol IConnectable
   (patch-to! [this input]))
 
-;; entities
+;; entities TODO: use plain helper functions instead of lfo abstraction
 (defrecord LFO [oscillator gain]
   IOscillator
   (set-waveform! [this waveform]
-    (set! (.-type oscillator) waveform))
+    (utils/set-type! this.oscillator waveform))
   (set-frequency! [this frequency]
-    (.setValueAtTime this.oscillator.frequency frequency ctx.currentTime))
+    (utils/set-frequency! this.oscillator frequency))
   IGain
   (set-gain! [this amplitude]
-    (.setValueAtTime this.gain.gain amplitude ctx.currentTime))
+    (utils/set-gain! this.gain amplitude))
   IConnectable
-  (patch-to! [this input] (.connect this.gain input)))
+  (patch-to! [this input] (utils/connect this.gain input)))
 
 (defn make-lfo [context]
-  (let [lfo (->LFO (.createOscillator context) (.createGain context))]
-    (.connect (:oscillator lfo) (:gain lfo))
-    (.start (:oscillator lfo))
+  (let [lfo (->LFO (utils/make-oscillator ctx) (utils/make-gain context))]
+    (utils/connect (:oscillator lfo) (:gain lfo))
+    (utils/start-osc (:oscillator lfo))
     lfo))
 
 ;; vibrato
 (def vibrato (make-lfo ctx))
 
 ;; master filter
-(def master-filter (.createBiquadFilter ctx))
-(set! (.-type master-filter) "lowpass")
-(set! (.-value master-filter.frequency) 10000)
+(def master-filter (utils/make-biquad-filter ctx))
+(utils/set-type! master-filter "lowpass")
+(utils/set-frequency! master-filter 10000)
 
 ;; master volume
-(def master-volume (.createGain ctx))
-(set! (.-value master-volume.gain) 0.5)
+(def master-volume (utils/make-gain ctx))
+(utils/set-gain! master-volume 0.5)
 
 ;; routing
 (utils/connect master-filter master-volume ctx.destination)
@@ -69,10 +68,10 @@
 ;; TODO: Fix bad api. switch to key-based
 (defn update-frequency! [percent]
   (let [new-freq (percent-to-freq percent)]
-    (set! (.-value master-filter.frequency) new-freq)))
+    (utils/set-frequency! master-filter new-freq)))
 (defn update-q![percent]
   (let [new-q (percent-to-q percent)]
-    (set! (.-value master-filter.Q) new-q)))
+    (utils/set-q! master-filter new-q)))
 (defn update-lfo-speed! "no conversion" [percent]
   (let [speed (percent-to-lfo-speed percent)]
     (set-frequency! vibrato speed)))
