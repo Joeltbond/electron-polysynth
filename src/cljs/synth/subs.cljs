@@ -1,44 +1,15 @@
 (ns synth.subs
 	(:require [re-frame.core :refer [reg-sub subscribe]]))
 
-;; TODO: this can't be right...
+(defn query [db [event-id]]
+  (event-id db))
 
-(reg-sub
-  :vibrato-speed
-  (fn [db _] 
-    (:vibrato-speed db)))
-(reg-sub
-  :vibrato-depth
-  (fn [db _] 
-    (:vibrato-depth db)))
-
-(reg-sub
-  :filter-q
-  (fn [db _] 
-    (:filter-q db)))
-(reg-sub
-  :filter-freq
-  (fn [db _] 
-    (:filter-freq db)))
-
-(reg-sub
-  :attack-time
-  (fn [db _] 
-    (:attack-time db)))
-(reg-sub
-  :decay-time
-  (fn [db _] 
-    (:decay-time db)))
-(reg-sub
-  :sustain-level
-  (fn [db _] 
-    (:sustain-level db)))
-(reg-sub
-  :release-time
-  (fn [db _] 
-    (:release-time db)))
-
-(reg-sub
-  :waveform
-  (fn [db _] 
-    (:waveform db)))
+(reg-sub :vibrato-speed query)
+(reg-sub :vibrato-depth query)
+(reg-sub :filter-q query)
+(reg-sub :filter-freq query)
+(reg-sub :attack-time query)
+(reg-sub :decay-time query)
+(reg-sub :sustain-level query)
+(reg-sub :release-time query)
+(reg-sub :waveform query)
