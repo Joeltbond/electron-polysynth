@@ -2,6 +2,8 @@
   (:require-macros [cljs.core.async.macros :refer [go-loop]])
   (:require [cljs.core.async :refer [take! <! chan]]))
 
+(enable-console-print!)
+
 (defprotocol INoteProcessor
   (listen [this channel]))
 

@@ -1,18 +1,15 @@
 (ns synth.synth
   (:require [synth.audio.note-processor :as np]
-            [synth.audio.envelope :as env]
-            [synth.audio.voice :as voice]))
+            [synth.audio.voice :as voice]
+            [synth.audio.utils :as utils]))
+
+(def waves [:sawtooth :square :triangle :sine])
 
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
 (def current-osc-wave (atom :sine))
 (def adsr (atom {:attack-time 0 :decay-time 0 :sustain-level 1 :release-time 0}))
-
-;; utils
-(defn- connect [& nodes]
-  (doall
-    (map (fn [[a b]] (.connect a b))
-         (partition 2 1 nodes))))
+; (def voice-bank (vector (repeat (voice/make-voice ctx) 8)))
 
 ;; protocols
 (defprotocol IOscillator
@@ -25,39 +22,39 @@
 (defprotocol IConnectable
   (patch-to! [this input]))
 
-;; entities
+;; entities TODO: use plain helper functions instead of lfo abstraction
 (defrecord LFO [oscillator gain]
   IOscillator
   (set-waveform! [this waveform]
-    (set! (.-type oscillator) waveform))
+    (utils/set-type! this.oscillator waveform))
   (set-frequency! [this frequency]
-    (.setValueAtTime this.oscillator.frequency frequency ctx.currentTime))
+    (utils/set-frequency! this.oscillator frequency))
   IGain
   (set-gain! [this amplitude]
-    (.setValueAtTime this.gain.gain amplitude ctx.currentTime))
+    (utils/set-gain! this.gain amplitude))
   IConnectable
-  (patch-to! [this input] (.connect this.gain input)))
+  (patch-to! [this input] (utils/connect this.gain input)))
 
 (defn make-lfo [context]
-  (let [lfo (->LFO (.createOscillator context) (.createGain context))]
-    (.connect (:oscillator lfo) (:gain lfo))
-    (.start (:oscillator lfo))
+  (let [lfo (->LFO (utils/make-oscillator ctx) (utils/make-gain context))]
+    (utils/connect (:oscillator lfo) (:gain lfo))
+    (utils/start-osc (:oscillator lfo))
     lfo))
 
 ;; vibrato
 (def vibrato (make-lfo ctx))
 
 ;; master filter
-(def master-filter (.createBiquadFilter ctx))
-(set! (.-type master-filter) "lowpass")
-(set! (.-value master-filter.frequency) 10000)
+(def master-filter (utils/make-biquad-filter ctx))
+(utils/set-type! master-filter "lowpass")
+(utils/set-frequency! master-filter 10000)
 
 ;; master volume
-(def master-volume (.createGain ctx))
-(set! (.-value master-volume.gain) 0.5)
+(def master-volume (utils/make-gain ctx))
+(utils/set-gain! master-volume 0.5)
 
 ;; routing
-(connect master-filter master-volume ctx.destination)
+(utils/connect master-filter master-volume ctx.destination)
 
 ;; conversions
 (defn percent-to-freq [percent]
@@ -73,11 +70,11 @@
 ;; TODO: Fix bad api. switch to key-based
 (defn update-frequency! [percent]
   (let [new-freq (percent-to-freq percent)]
-    (set! (.-value master-filter.frequency) new-freq)))
+    (utils/set-frequency! master-filter new-freq)))
 (defn update-q![percent]
   (let [new-q (percent-to-q percent)]
-    (set! (.-value master-filter.Q) new-q)))
-(defn update-lfo-speed! "no conversion" [percent]
+    (utils/set-q! master-filter new-q)))
+(defn update-lfo-speed! [percent]
   (let [speed (percent-to-lfo-speed percent)]
     (set-frequency! vibrato speed)))
 (defn update-lfo-depth! [percent]
@@ -94,35 +91,19 @@
 (defn update-sustain! [percent]
   (swap! adsr assoc :sustain-level (/ percent 100)))
 
-(defn- create-oscillator [frequency wave]
-  (let [osc (.createOscillator ctx)]
-    (set! (.-type osc) (name wave))
-    (set! (.-value osc.frequency) frequency)
-    osc))
-
-
 ;;TODO. need to delete nodes
 (defn start-note
   "Starts a new synth voice and adds it to the map of active voices"
   [freq]
-  (let [osc (create-oscillator freq @current-osc-wave)
-        gain (.createGain ctx)
-        envelope (env/make-envelope ctx gain.gain @adsr)
-        vibrato-tuner (.createGain ctx)]
-    (set! (.-value vibrato-tuner.gain) (/ freq 400))
-    (patch-to! vibrato vibrato-tuner)
-    (connect vibrato-tuner osc.frequency)
-    (connect osc gain master-filter)
-    (env/trigger-on envelope)
-    (.start osc)
-    (swap! active-voices assoc freq (voice/make-voice osc envelope))))
+  (let [v (voice/make-voice ctx (:gain vibrato) master-filter)]
+    (voice/trigger-on ctx v freq @current-osc-wave @adsr)
+    (swap! active-voices assoc freq v)))
 
 (defn stop-note
   "Stops a synth voice and removes it from the map of active voices"
   [freq]
-  (let [voice (@active-voices freq)
-        envelope (:envelope voice)]
-    (env/trigger-off envelope)
+  (let [voice (@active-voices freq)]
+    (voice/trigger-off ctx voice @adsr)
     (swap! active-voices dissoc freq)))
 
 (def note-processor (np/make-note-processor
