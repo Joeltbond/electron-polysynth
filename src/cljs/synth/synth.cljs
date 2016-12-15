@@ -1,18 +1,14 @@
 (ns synth.synth
   (:require [synth.audio.note-processor :as np]
             [synth.audio.envelope :as env]
-            [synth.audio.voice :as voice]))
+            [synth.audio.voice :as voice]
+            [synth.audio.utils :as utils]))
 
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
 (def current-osc-wave (atom :sine))
 (def adsr (atom {:attack-time 0 :decay-time 0 :sustain-level 1 :release-time 0}))
-
-;; utils
-(defn- connect [& nodes]
-  (doall
-    (map (fn [[a b]] (.connect a b))
-         (partition 2 1 nodes))))
+; (def voice-bank (vector (repeat (voice/make-voice ctx) 8)))
 
 ;; protocols
 (defprotocol IOscillator
@@ -57,7 +53,7 @@
 (set! (.-value master-volume.gain) 0.5)
 
 ;; routing
-(connect master-filter master-volume ctx.destination)
+(utils/connect master-filter master-volume ctx.destination)
 
 ;; conversions
 (defn percent-to-freq [percent]
@@ -94,35 +90,19 @@
 (defn update-sustain! [percent]
   (swap! adsr assoc :sustain-level (/ percent 100)))
 
-(defn- create-oscillator [frequency wave]
-  (let [osc (.createOscillator ctx)]
-    (set! (.-type osc) (name wave))
-    (set! (.-value osc.frequency) frequency)
-    osc))
-
-
 ;;TODO. need to delete nodes
 (defn start-note
   "Starts a new synth voice and adds it to the map of active voices"
   [freq]
-  (let [osc (create-oscillator freq @current-osc-wave)
-        gain (.createGain ctx)
-        envelope (env/make-envelope ctx gain.gain @adsr)
-        vibrato-tuner (.createGain ctx)]
-    (set! (.-value vibrato-tuner.gain) (/ freq 400))
-    (patch-to! vibrato vibrato-tuner)
-    (connect vibrato-tuner osc.frequency)
-    (connect osc gain master-filter)
-    (env/trigger-on envelope)
-    (.start osc)
-    (swap! active-voices assoc freq (voice/make-voice osc envelope))))
+  (let [v (voice/make-voice ctx (:gain vibrato) master-filter)]
+    (voice/trigger-on ctx v freq @current-osc-wave @adsr)
+    (swap! active-voices assoc freq v)))
 
 (defn stop-note
   "Stops a synth voice and removes it from the map of active voices"
   [freq]
-  (let [voice (@active-voices freq)
-        envelope (:envelope voice)]
-    (env/trigger-off envelope)
+  (let [voice (@active-voices freq)]
+    (voice/trigger-off ctx voice @adsr)
     (swap! active-voices dissoc freq)))
 
 (def note-processor (np/make-note-processor

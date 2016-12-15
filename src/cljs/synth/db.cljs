@@ -3,12 +3,9 @@
 
 (s/def ::vibrato-speed number?)
 (s/def ::vibrato-depth number?)
-
 (s/def ::filter-q number?)
 (s/def ::filter-freq number?)
-
 (s/def ::waveform keyword?)
-
 (s/def ::attack-time number?)
 (s/def ::decay-time number?)
 (s/def ::sustain-level number?)

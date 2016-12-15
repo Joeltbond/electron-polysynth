@@ -7,7 +7,6 @@
             [re-frame.core :refer [dispatch dispatch-sync]]
             [synth.channel-router :as cr]))
 
-(enable-console-print!)
 
 (defn mount-root
   []
