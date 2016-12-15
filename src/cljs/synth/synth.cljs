@@ -3,6 +3,8 @@
             [synth.audio.voice :as voice]
             [synth.audio.utils :as utils]))
 
+(def waves [:sawtooth :square :triangle :sine])
+
 (def ctx (js/AudioContext.))
 (def active-voices (atom {}))
 (def current-osc-wave (atom :sine))
@@ -72,7 +74,7 @@
 (defn update-q![percent]
   (let [new-q (percent-to-q percent)]
     (utils/set-q! master-filter new-q)))
-(defn update-lfo-speed! "no conversion" [percent]
+(defn update-lfo-speed! [percent]
   (let [speed (percent-to-lfo-speed percent)]
     (set-frequency! vibrato speed)))
 (defn update-lfo-depth! [percent]

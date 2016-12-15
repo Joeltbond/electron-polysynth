@@ -3,12 +3,6 @@
             [synth.components :as c]
             [reagent.core :as r]))
 
-(defonce app-state
-  (r/atom
-    {:wave :sawtooth}))
-
-(def waves [:sawtooth :square :triangle :sine])
-
 (defn main-page
   []
   [:div {:class "app"}
@@ -21,7 +15,7 @@
 
     ;; OSC
     [:div {:class "button-container"}
-      (for [w waves]
+      (for [w s/waves]
           ^{:key w}[c/wave-button w])
       [:div "osc waveforms"]]
 
