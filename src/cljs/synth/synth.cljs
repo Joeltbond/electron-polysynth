@@ -52,7 +52,6 @@
 (def free-voices 
   (->> (repeatedly #(voice/make-voice ctx (:gain vibrato) master-filter))
     (take 8)
-    (doall)
     (atom)))
 
 ;; master volume
@@ -100,16 +99,17 @@
 ;;TODO. need to delete nodes
 (defn start-note [freq]
   (let [v (first @free-voices)]
-    (prn v)
-    (voice/trigger-on ctx v freq @current-osc-wave @adsr)
-    (swap! free-voices rest)
-    (swap! active-voices assoc freq v)))
+    (when v
+      (voice/trigger-on ctx v freq @current-osc-wave @adsr)
+      (swap! free-voices rest)
+      (swap! active-voices assoc freq v))))
 
 (defn stop-note [freq]
-  (let [voice (@active-voices freq)]
-    (voice/trigger-off ctx voice @adsr)
-    (swap! free-voices conj voice)
-    (swap! active-voices dissoc freq)))
+  (let [v (@active-voices freq)]
+    (when v
+      (voice/trigger-off ctx v @adsr)
+      (swap! free-voices conj v)
+      (swap! active-voices dissoc freq))))
 
 (def note-processor (np/make-note-processor
   {:on-note-on start-note
