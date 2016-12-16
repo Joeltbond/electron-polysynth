@@ -6,7 +6,6 @@
 (def waves [:sawtooth :square :triangle :sine])
 
 (def ctx (js/AudioContext.))
-(def active-voices (atom {}))
 (def current-osc-wave (atom :sine))
 (def adsr (atom {:attack-time 0 :decay-time 0 :sustain-level 1 :release-time 0}))
 ; (def voice-bank (vector (repeat (voice/make-voice ctx) 8)))
@@ -48,6 +47,13 @@
 (def master-filter (utils/make-biquad-filter ctx))
 (utils/set-type! master-filter "lowpass")
 (utils/set-frequency! master-filter 10000)
+
+(def active-voices (atom {}))
+(def free-voices 
+  (->> (repeatedly #(voice/make-voice ctx (:gain vibrato) master-filter))
+    (take 8)
+    (doall)
+    (atom)))
 
 ;; master volume
 (def master-volume (utils/make-gain ctx))
@@ -92,18 +98,17 @@
   (swap! adsr assoc :sustain-level (/ percent 100)))
 
 ;;TODO. need to delete nodes
-(defn start-note
-  "Starts a new synth voice and adds it to the map of active voices"
-  [freq]
-  (let [v (voice/make-voice ctx (:gain vibrato) master-filter)]
+(defn start-note [freq]
+  (let [v (first @free-voices)]
+    (prn v)
     (voice/trigger-on ctx v freq @current-osc-wave @adsr)
+    (swap! free-voices rest)
     (swap! active-voices assoc freq v)))
 
-(defn stop-note
-  "Stops a synth voice and removes it from the map of active voices"
-  [freq]
+(defn stop-note [freq]
   (let [voice (@active-voices freq)]
     (voice/trigger-off ctx voice @adsr)
+    (swap! free-voices conj voice)
     (swap! active-voices dissoc freq)))
 
 (def note-processor (np/make-note-processor

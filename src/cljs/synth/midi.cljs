@@ -11,9 +11,6 @@
   (let [note-number (aget (.-data message) 1)
 	      message-number (aget (.-data message) 0)
         message-type (case message-number 144 :note-on 128 :note-off :other)]
-    (prn note-number)
-    (prn message-number)
-    (prn message-type)
     (go (>! midi-events {:event-type message-type :frequency (get-frequency note-number)}))))
 
 (defn- attach-midi-handlers [inputs]

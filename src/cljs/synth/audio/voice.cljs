@@ -7,11 +7,16 @@
 (defn make-voice [context pitch-lfo output]
 	(let [osc (utils/make-oscillator context)
 		    vca (utils/make-gain context)
-		    vibrato-amplitude (utils/make-gain context)]
+		    vibrato-amplitude (utils/make-gain context)
+		    now (.-currentTime context)]
 		(utils/connect pitch-lfo vibrato-amplitude osc.frequency)
 		(utils/connect osc vca output)
 
-		;; todo: take a map
+		(.setValueAtTime vca.gain 0 now)
+
+		(utils/start-osc osc)
+		(.log js/console "creating")
+		(.log js/console osc)
 		(->Voice osc vca vibrato-amplitude)))
 
 (defn trigger-on [context voice frequency wave adsr]
@@ -25,13 +30,12 @@
 
 		(utils/set-gain! vibrato-amplitude (/ frequency 400))
 		(utils/set-type! osc (name wave))
-		(utils/set-frequency! osc.frequency frequency)
-		(utils/start-osc osc)
+		(utils/set-frequency! osc frequency)
 
 		(.cancelScheduledValues vca-gain now)
 		(.setValueAtTime vca-gain 0 now)
 		(.linearRampToValueAtTime vca-gain 1 (+ now attack))
-		(.exponentialRampToValueAtTime vca-gain sustain (+ now attack decay))))
+		(.linearRampToValueAtTime vca-gain sustain (+ now attack decay))))
 
 ;; TODO delete nodes
 (defn trigger-off [context voice adsr]
