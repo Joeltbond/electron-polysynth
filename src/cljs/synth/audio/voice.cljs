@@ -23,10 +23,10 @@
 				sustain (:sustain-level adsr)
 		    now (.-currentTime context)]
 
-		(set! (.-value vibrato-amplitude.gain) (/ frequency 400))
-		(set! (.-type osc) (name wave))
-		(set! (.-value osc.frequency) frequency)
-		(.start osc)
+		(utils/set-gain! vibrato-amplitude (/ frequency 400))
+		(utils/set-type! osc (name wave))
+		(utils/set-frequency! osc.frequency frequency)
+		(utils/start-osc osc)
 
 		(.cancelScheduledValues vca-gain now)
 		(.setValueAtTime vca-gain 0 now)
