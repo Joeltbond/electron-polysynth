@@ -34,14 +34,14 @@
 (defn get-output [] midi-events)
 
 ;; dev helper button
-(defn on-key-press []
-  (on-midi-message (js-obj "data" (js/Array 144 57))))
+; (defn on-key-press []
+;   (on-midi-message (js-obj "data" (js/Array 144 57))))
 
-(defn on-key-depress []
-  (on-midi-message (js-obj "data" (js/Array 128 57))))
+; (defn on-key-depress []
+;   (on-midi-message (js-obj "data" (js/Array 128 57))))
 
-(.addEventListener (.getElementById js/document "button") "mousedown" on-key-press)
-(.addEventListener (.getElementById js/document "button") "mouseup" on-key-depress)
+; (.addEventListener (.getElementById js/document "button") "mousedown" on-key-press)
+; (.addEventListener (.getElementById js/document "button") "mouseup" on-key-depress)
 
 ;; startup
 (request-midi-access)
