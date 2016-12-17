@@ -96,6 +96,40 @@
 (defn update-sustain! [percent]
   (swap! adsr assoc :sustain-level (/ percent 100)))
 
+(defmulti update-param! (fn [key value] key))
+
+(defmethod update-param! :filter-freq [_ percent]
+  (let [new-freq (percent-to-freq percent)]
+    (utils/set-frequency! master-filter new-freq)))
+
+(defmethod update-param! :filter-q [_ percent]
+  (let [new-q (percent-to-q percent)]
+    (utils/set-q! master-filter new-q)))
+
+(defmethod update-param! :vibrato-speed [_ percent]
+  (let [speed (percent-to-lfo-speed percent)]
+    (set-frequency! vibrato speed)))
+
+(defmethod update-param! :vibrato-depth [_ percent]
+  (let [depth (percent-to-lfo-depth percent)]
+    (set-gain! vibrato depth)))
+
+(defmethod update-param! :waveform [_ wave]
+  (reset! current-osc-wave wave))
+
+(defmethod update-param! :attack-time [_ percent]
+  (swap! adsr assoc :attack-time (/ percent 10)))
+
+(defmethod update-param! :decay-time [_ percent]
+  (swap! adsr assoc :decay-time (/ percent 10)))
+
+(defmethod update-param! :sustain-level [_ percent]
+  (swap! adsr assoc :sustain-level (/ percent 100)))
+
+(defmethod update-param! :release-time [_ percent]
+  (swap! adsr assoc :release-time (/ percent 10)))
+
+
 ;;TODO. need to delete nodes
 (defn start-note [freq]
   (let [v (first @free-voices)]

@@ -21,19 +21,19 @@
 			(< new-value 0) 0
 			:else new-value)))
 
-;; TODO: switch synth api to be key-based
-(defn- synth-synth [db]
-	(synth/update-frequency! (:filter-freq db))
-	(synth/update-q! (:filter-q db))
-	(synth/update-lfo-speed! (:vibrato-speed db))
-	(synth/update-lfo-depth! (:vibrato-depth db))
-	(synth/update-osc-wave! (:waveform db))
-	(synth/update-attack! (:attack-time db))
-	(synth/update-decay! (:decay-time db))
-	(synth/update-sustain! (:sustain-level db))
-	(synth/update-release! (:release-time db)))
+;; TODO: only update changed param
+(defn- sync-synth [db]
+	(synth/update-param! :filter-freq (:filter-freq db))
+	(synth/update-param! :filter-q (:filter-q db))
+	(synth/update-param! :vibrato-speed (:vibrato-speed db))
+	(synth/update-param! :vibrato-depth (:vibrato-depth db))
+	(synth/update-param! :waveform (:waveform db))
+	(synth/update-param! :attack-time (:attack-time db))
+	(synth/update-param! :decay-time (:decay-time db))
+	(synth/update-param! :sustain-level (:sustain-level db))
+	(synth/update-param! :release-time (:release-time db)))
 
-(def sync-synth-interceptor (after synth-synth))
+(def sync-synth-interceptor (after sync-synth))
 
 (reg-event-db
   :initialise-db
