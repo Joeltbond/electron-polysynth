@@ -2,7 +2,7 @@
   (:require
     [synth.db      :refer [default-value]]
     [synth.synth   :as synth]
-    [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx path trim-v
+    [re-frame.core :refer [reg-event-db reg-fx reg-event-fx inject-cofx path trim-v
                            after debug]]
     [cljs.spec     :as s]))
 
@@ -21,36 +21,42 @@
 			(< new-value 0) 0
 			:else new-value)))
 
-;; TODO: only update changed param
-(defn- sync-synth [db]
-	(synth/update-param! :filter-freq (:filter-freq db))
-	(synth/update-param! :filter-q (:filter-q db))
-	(synth/update-param! :vibrato-speed (:vibrato-speed db))
-	(synth/update-param! :vibrato-depth (:vibrato-depth db))
-	(synth/update-param! :waveform (:waveform db))
-	(synth/update-param! :attack-time (:attack-time db))
-	(synth/update-param! :decay-time (:decay-time db))
-	(synth/update-param! :sustain-level (:sustain-level db))
-	(synth/update-param! :release-time (:release-time db)))
+(reg-fx
+	:initialise-synth
+	(fn [val]
+		(doseq [[k v] val]
+			(synth/update-param! k v))))
 
-(def sync-synth-interceptor (after sync-synth))
+(reg-fx
+	:update-synth
+	(fn [val]
+		(prn val)
+		(synth/update-param! (:key val) (:value val))))
 
-(reg-event-db
-  :initialise-db
-  [check-spec-interceptor sync-synth-interceptor]
-  (fn
-  	[db _]
-    (merge db default-value))) 
+(reg-event-fx
+  :initialise
+  [check-spec-interceptor]
+  (fn [world _]
+    {:db (merge (:db world) default-value)
+     :initialise-synth default-value})) 
 
-(reg-event-db
+(reg-event-fx
 	:knob-scroll
-	[check-spec-interceptor sync-synth-interceptor trim-v]
-	(fn [db [key delta]]
-		(let [new-value (rectify-knob-value (key db) delta)]
-			(assoc db key new-value))))
+	[check-spec-interceptor trim-v]
+	(fn [world [key delta]]
+		(let [db (:db world)
+					rectified-value (rectify-knob-value (key db) delta)]
+			{:db (assoc db key rectified-value)
+			 :update-synth {:key key
+			 	              :value rectified-value}})))
 
-(reg-event-db
+(reg-event-fx
 	:change-waveform
-	[check-spec-interceptor sync-synth-interceptor (path :waveform) trim-v]
-	(fn [old-wf [new-wv]]
-		new-wv))
+	[check-spec-interceptor trim-v]
+	(fn [world [new-wv]]
+		(let [db (:db world)]
+			(prn "new-wv")
+			(prn new-wv)
+			{:db (assoc db :waveform new-wv)
+			 :update-synth {:key :waveform
+			 	              :value new-wv}})))

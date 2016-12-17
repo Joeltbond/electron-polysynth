@@ -10,7 +10,7 @@
 
 (defn mount-root
   []
-  (dispatch-sync [:initialise-db])
+  (dispatch-sync [:initialise])
   (reagent/render [synth.views/main-page]
                   (.getElementById js/document "app")))
   (channel-router/init!)

@@ -4,44 +4,15 @@
             [synth.audio.utils :as utils]))
 
 (def waves [:sawtooth :square :triangle :sine])
-
 (def ctx (js/AudioContext.))
-(def current-osc-wave (atom :sine))
+(def current-osc-wave (atom))
 (def adsr (atom {:attack-time 0 :decay-time 0 :sustain-level 1 :release-time 0}))
-; (def voice-bank (vector (repeat (voice/make-voice ctx) 8)))
-
-;; protocols
-(defprotocol IOscillator
-  (set-waveform! [this waveform])
-  (set-frequency! [this frequency]))
-
-(defprotocol IGain
-  (set-gain! [this gain]))
-
-(defprotocol IConnectable
-  (patch-to! [this input]))
-
-;; entities TODO: use plain helper functions instead of lfo abstraction
-(defrecord LFO [oscillator gain]
-  IOscillator
-  (set-waveform! [this waveform]
-    (utils/set-type! this.oscillator waveform))
-  (set-frequency! [this frequency]
-    (utils/set-frequency! this.oscillator frequency))
-  IGain
-  (set-gain! [this amplitude]
-    (utils/set-gain! this.gain amplitude))
-  IConnectable
-  (patch-to! [this input] (utils/connect this.gain input)))
-
-(defn make-lfo [context]
-  (let [lfo (->LFO (utils/make-oscillator ctx) (utils/make-gain context))]
-    (utils/connect (:oscillator lfo) (:gain lfo))
-    (utils/start-osc (:oscillator lfo))
-    lfo))
 
 ;; vibrato
-(def vibrato (make-lfo ctx))
+(def vibrato-osc (utils/make-oscillator ctx))
+(def vibrato-amp (utils/make-gain ctx))
+(utils/connect vibrato-osc vibrato-amp)
+(utils/start-osc vibrato-osc)
 
 ;; master filter
 (def master-filter (utils/make-biquad-filter ctx))
@@ -50,7 +21,7 @@
 
 (def active-voices (atom {}))
 (def free-voices 
-  (->> (repeatedly #(voice/make-voice ctx (:gain vibrato) master-filter))
+  (->> (repeatedly #(voice/make-voice ctx vibrato-amp master-filter))
     (take 8)
     (atom)))
 
@@ -58,7 +29,7 @@
 (def master-volume (utils/make-gain ctx))
 (utils/set-gain! master-volume 0.5)
 
-;; routing
+;; main routing
 (utils/connect master-filter master-volume ctx.destination)
 
 ;; conversions
@@ -72,30 +43,6 @@
   (/ percent 4))
 
 ;; controls
-;; TODO: Fix bad api. switch to key-based
-(defn update-frequency! [percent]
-  (let [new-freq (percent-to-freq percent)]
-    (utils/set-frequency! master-filter new-freq)))
-(defn update-q![percent]
-  (let [new-q (percent-to-q percent)]
-    (utils/set-q! master-filter new-q)))
-(defn update-lfo-speed! [percent]
-  (let [speed (percent-to-lfo-speed percent)]
-    (set-frequency! vibrato speed)))
-(defn update-lfo-depth! [percent]
-  (let [depth (percent-to-lfo-depth percent)]
-    (set-gain! vibrato depth)))
-(defn update-osc-wave! [wave]
-  (reset! current-osc-wave wave))
-(defn update-attack! [percent]
-  (swap! adsr assoc :attack-time (/ percent 10)))
-(defn update-decay! [percent]
-  (swap! adsr assoc :decay-time (/ percent 10)))
-(defn update-release! [percent]
-  (swap! adsr assoc :release-time (/ percent 10)))
-(defn update-sustain! [percent]
-  (swap! adsr assoc :sustain-level (/ percent 100)))
-
 (defmulti update-param! (fn [key value] key))
 
 (defmethod update-param! :filter-freq [_ percent]
@@ -108,11 +55,11 @@
 
 (defmethod update-param! :vibrato-speed [_ percent]
   (let [speed (percent-to-lfo-speed percent)]
-    (set-frequency! vibrato speed)))
+    (utils/set-frequency! vibrato-osc speed)))
 
 (defmethod update-param! :vibrato-depth [_ percent]
   (let [depth (percent-to-lfo-depth percent)]
-    (set-gain! vibrato depth)))
+    (utils/set-gain! vibrato-amp depth)))
 
 (defmethod update-param! :waveform [_ wave]
   (reset! current-osc-wave wave))
@@ -129,8 +76,6 @@
 (defmethod update-param! :release-time [_ percent]
   (swap! adsr assoc :release-time (/ percent 10)))
 
-
-;;TODO. need to delete nodes
 (defn start-note [freq]
   (let [v (first @free-voices)]
     (when v
