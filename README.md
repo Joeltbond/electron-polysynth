@@ -3,7 +3,7 @@
 
 A simple, organ-like synthesizer built with Web Audio, Reagent and Re-frame running in Electron.
 
-![screenshot](/screenshots/Screen\ Shot.png?raw=true&r=10 "screenshot")
+![screenshot](https://github.com/Joeltbond/electron-polysynth/blob/master/screenshots/Screen%20Shot.png)"screenshot"
 
 ## Requirements
 
